@@ -1,0 +1,25 @@
+IMAGE_NAME = "bento/debian-12"
+
+Vagrant.configure("2") do |config|
+    config.ssh.insert_key = false
+
+    config.vm.provider "virtualbox" do |zabbix|
+        zabbix.memory = 2048
+        zabbix.cpus = 2
+    end
+
+    config.vm.define "zabbix" do |zabbix|
+        zabbix.vm.box = IMAGE_NAME
+        zabbix.vm.network "forwarded_port", guest: 22, host: 2205, host_ip: "127.0.0.1"
+	zabbix.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+        zabbix.vm.hostname = "debiandvoracekm2"
+    end
+
+    config.vm.provision "file", source: "id_rsa.pub", destination: "/home/vagrant/.ssh/me.pub"
+    config.vm.provision "shell", inline: <<-SHELL
+    cat /home/vagrant/.ssh/me.pub >> /home/vagrant/.ssh/authorized_keys
+
+    SHELL
+        # Načtení a provedení scriptu zabbix_server.sh
+    config.vm.provision "shell", path: "instalace.sh"
+end
